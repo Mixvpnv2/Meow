@@ -4782,7 +4782,7 @@ function library:CreateSettingsTab(menu)
                library:Unload() 
            end
        end})
-    mainSection:AddButton({text = 'Rejoin Server', confirm = true, callback = function()
+    mainSection:AddButton({text = 'info executor lvl', confirm = true, callback = function()
         printidentity()
     end})
 

@@ -4744,19 +4744,34 @@ function library:CreateSettingsTab(menu)
     end});
 
     mainSection:AddButton({text = 'Join Discord', flag = 'joindiscord', confirm = true, callback = function()
-        local res = syn.request({
-            Url = 'https://discord.gg/xbvDUA8eCt',
-            Method = 'POST',
-            Headers = {
-                ['Content-Type'] = 'application/json',
-                Origin = 'https://discord.com'
-            },
-            Body = game:GetService('HttpService'):JSONEncode({
-                cmd = 'INVITE_BROWSER',
-                nonce = game:GetService('HttpService'):GenerateGUID(false),
-                args = {code = 'xbvDUA8eCt'}
+        local requests = request or http_request or syn.request
+        local Code = "xbvDUA8eCt"
+        
+        if requests then
+            local json = {
+                ["cmd"] = "INVITE_BROWSER",
+                ["args"] = {["code"] = Code},
+                ["nonce"] = 'a'
+            }
+            task.spawn(function()
+                requests({
+                    Url = 'http://127.0.0.1:6463/rpc?v=1',
+                    Method = 'POST',
+                    Headers = {
+                        ['Content-Type'] = 'application/json',
+                        ['Origin'] = 'https://discord.com'
+                    },
+                    Body = game:GetService('HttpService'):JSONEncode(json)
+                })
+            end)
+        end
+        if setclipboard then
+            setclipboard("https://discord.gg/"..Code)
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Discord",
+                Text = "Copied Discord invite to clipboard!"
             })
-        })
+        end
         if res.Success then
             library:SendNotification(library.cheatname..' | Joined Discord', 3);
         end

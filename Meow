@@ -63,14 +63,40 @@ local library = {
     open = false;
     opening = false;
     hasInit = false;
-    cheatname = startupArgs.cheatname or 'OctoHook.Xyz';
-    gamename = startupArgs.gamename or 'Project Delta';
+    cheatname = startupArgs.cheatname or 'Clanware';
+    gamename = startupArgs.gamename or 'Universal';
     fileext = startupArgs.fileext or '.txt';
 }
 
 library.themes = {
     {
         name = 'Default',
+        theme = {
+            ['Accent']                    = fromrgb(124,97,196);
+            ['Background']                = fromrgb(17,17,17);
+            ['Border']                    = fromrgb(0,0,0);
+            ['Border 1']                  = fromrgb(47,47,47);
+            ['Border 2']                  = fromrgb(17,17,17);
+            ['Border 3']                  = fromrgb(10,10,10);
+            ['Primary Text']              = fromrgb(235,235,235);
+            ['Group Background']          = fromrgb(17,17,17);
+            ['Selected Tab Background']   = fromrgb(17,17,17);
+            ['Unselected Tab Background'] = fromrgb(17,17,17);
+            ['Selected Tab Text']         = fromrgb(245,245,245);
+            ['Unselected Tab Text']       = fromrgb(145,145,145);
+            ['Section Background']        = fromrgb(17,17,17);
+            ['Option Text 1']             = fromrgb(245,245,245);
+            ['Option Text 2']             = fromrgb(195,195,195);
+            ['Option Text 3']             = fromrgb(145,145,145);
+            ['Option Border 1']           = fromrgb(47,47,47);
+            ['Option Border 2']           = fromrgb(0,0,0);
+            ['Option Background']         = fromrgb(35,35,35);
+            ["Risky Text"]                = fromrgb(175, 21, 21);
+            ["Risky Text Enabled"]        = fromrgb(255, 41, 41);
+        }
+    },
+    {
+        name = 'Nekocheat Blue',
         theme = {
             ["Accent"]                    = fromrgb(0, 247, 255);
             ["Background"]                = fromrgb(18,18,18);
@@ -506,89 +532,55 @@ function library:init()
         self.UpdateThemeColors();
     end
 
--- After line 27 (local executor = ...)
--- Add these config functions directly to the library table
-function library:GetConfig(name)
-    if isfile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext) then
-        return readfile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext);
-    end
-end
-
-function library:LoadConfig(name)
-    local cfg = self:GetConfig(name)
-    if not cfg then
-        self:SendNotification('Error loading config: Config does not exist. ('..tostring(name)..')', 5, c3new(1,0,0));
-        return
+    function self:GetConfig(name)
+        if isfile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext) then
+            return readfile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext);
+        end
     end
 
-    local s,e = pcall(function()
-        setByConfig = true
-        for flag,value in next, http:JSONDecode(cfg) do
-            local option = library.options[flag]
-            if option ~= nil then
-                if option.class == 'toggle' then
-                    option:SetState(value == nil and false or (value == 1 and true or false));
-                elseif option.class == 'slider' then
-                    option:SetValue(value == nil and 0 or value)
-                elseif option.class == 'bind' then
-                    option:SetBind(value == nil and 'none' or (utility:HasProperty(Enum.KeyCode, value) and Enum.KeyCode[value] or Enum.UserInputType[value]));
-                elseif option.class == 'color' then
-                    option:SetColor(value == nil and c3new(1,1,1) or c3new(value[1], value[2], value[3]));
-                    option:SetTrans(value == nil and 1 or value[4]);
-                elseif option.class == 'list' then
-                    option:Select(value == nil and '' or value);
-                elseif option.class == 'box' then
-                    option:SetInput(value == nil and '' or value)
+    function self:LoadConfig(name)
+        local cfg = self:GetConfig(name)
+        if not cfg then
+            self:SendNotification('Error loading config: Config does not exist. ('..tostring(name)..')', 5, c3new(1,0,0));
+            return
+        end
+
+        local s,e = pcall(function()
+            setByConfig = true
+            for flag,value in next, http:JSONDecode(cfg) do
+                local option = library.options[flag]
+                if option ~= nil then
+                    if option.class == 'toggle' then
+                        option:SetState(value == nil and false or (value == 1 and true or false));
+                    elseif option.class == 'slider' then
+                        option:SetValue(value == nil and 0 or value)
+                    elseif option.class == 'bind' then
+                        option:SetBind(value == nil and 'none' or (utility:HasProperty(Enum.KeyCode, value) and Enum.KeyCode[value] or Enum.UserInputType[value]));
+                    elseif option.class == 'color' then
+                        option:SetColor(value == nil and c3new(1,1,1) or c3new(value[1], value[2], value[3]));
+                        option:SetTrans(value == nil and 1 or value[4]);
+                    elseif option.class == 'list' then
+                        option:Select(value == nil and '' or value);
+                    elseif option.class == 'box' then
+                        option:SetInput(value == nil and '' or value)
+                    end
                 end
             end
+            setByConfig = false
+        end)
+
+        if s then
+            self:SendNotification('Successfully loaded config: '..name, 5, c3new(0,1,0));
+        else
+            self:SendNotification('Error loading config: '..tostring(e)..'. ('..tostring(name)..')', 5, c3new(1,0,0));
         end
-        setByConfig = false
-    end)
-
-    if s then
-        self:SendNotification('Successfully loaded config: '..name, 5, c3new(0,1,0));
-    else
-        self:SendNotification('Error loading config: '..tostring(e)..'. ('..tostring(name)..')', 5, c3new(1,0,0));
-    end
-end
-
-function library:SaveConfig(name)
-    if not self:GetConfig(name) then
-        self:SendNotification('Error saving config: Config does not exist. ('..tostring(name)..')', 5, c3new(1,0,0));
-        return
     end
 
-    local s,e = pcall(function()
-        local cfg = {};
-        for flag,option in next, self.options do
-            if option.class == 'toggle' then
-                cfg[flag] = option.state and 1 or 0;
-            elseif option.class == 'slider' then
-                cfg[flag] = option.value;
-            elseif option.class == 'bind' then
-                cfg[flag] = option.bind.Name;
-            elseif option.class == 'color' then
-                cfg[flag] = {
-                    option.color.r,
-                    option.color.g,
-                    option.color.b,
-                    option.trans,
-                }
-            elseif option.class == 'list' then
-                cfg[flag] = option.selected;
-            elseif option.class == 'box' then
-                cfg[flag] = option.input
-            end
+    function self:SaveConfig(name)
+        if not self:GetConfig(name) then
+            self:SendNotification('Error saving config: Config does not exist. ('..tostring(name)..')', 5, c3new(1,0,0));
+            return
         end
-        writefile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext, http:JSONEncode(cfg));
-    end)
-
-    if s then
-        self:SendNotification('Successfully saved config: '..name, 5, c3new(0,1,0));
-    else
-        self:SendNotification('Error saving config: '..tostring(e)..'. ('..tostring(name)..')', 5, c3new(1,0,0));
-    end
-end
 
         local s,e = pcall(function()
             local cfg = {};
@@ -4634,7 +4626,6 @@ function library:CreateSettingsTab(menu)
     local configSection = settingsTab:AddSection('Config', 1);
     local mainSection = settingsTab:AddSection('Main', 1);
 
-    -- Config UI elements
     configSection:AddBox({text = 'Config Name', flag = 'configinput'})
     configSection:AddList({text = 'Config', flag = 'selectedconfig'})
 
@@ -4670,7 +4661,6 @@ function library:CreateSettingsTab(menu)
 
     refreshConfigs()
 
-    -- Main settings
     mainSection:AddBind({text = 'Open / Close', flag = 'togglebind', nomouse = true, noindicator = true, bind = Enum.KeyCode.End, callback = function()
         library:SetOpen(not library.open)
     end});
@@ -4687,13 +4677,27 @@ function library:CreateSettingsTab(menu)
         setclipboard(([[game:GetService("TeleportService"):TeleportToPlaceInstance(%s, "%s")]]):format(game.PlaceId, game.JobId))
     end})
 
-    mainSection:AddButton({text = "Unload", confirm = true, callback = function() library:Unload() end})
+    mainSection:AddButton({text = "Unload", confirm = true,
+       callback = function(bool)
+           if bool then
+               library:Unload() 
+           else
+               library:Unload() 
+           end
+       end})
+    mainSection:AddButton({text = 'info executor lvl', confirm = true, callback = function()
+        printidentity()
+        wait(0.1)
+        print("what bro?")
+    end})
 
-    -- Indicators section
     mainSection:AddSeparator({text = 'Indicators'});
+
     mainSection:AddToggle({text = 'Watermark', flag = 'watermark_enabled', state = true,});
+
     mainSection:AddSlider({text = 'Custom X', flag = 'watermark_x', suffix = '%', min = 0, max = 63, increment = .1, value = 6});
     mainSection:AddSlider({text = 'Custom Y', flag = 'watermark_y', suffix = '%', min = 0, max = 95, increment = .1, value = 1});
+
     mainSection:AddToggle({text = 'Keybinds', flag = 'keybind_indicator', state = true, callback = function(bool)
         library.keyIndicator:SetEnabled(bool);
     end})
@@ -4704,18 +4708,24 @@ function library:CreateSettingsTab(menu)
         library.keyIndicator:SetPosition(newUDim2(library.flags.keybind_indicator_x / 100, 0, library.flags.keybind_indicator_y / 100, 0));    
     end});
 
-    -- Theme section
+
+
     local themeStrings = {"Custom"};
     for _,v in next, library.themes do
         table.insert(themeStrings, v.name)
     end
     local themeSection = settingsTab:AddSection('Theme', 2);
     local setByPreset = false
-    themeSection:AddList({text = 'Presets', flag = 'preset_theme', values = themeStrings, callback = function(newTheme)
+themeSection:AddList({text = 'Presets', flag = 'preset_theme', values = themeStrings, callback = function(newTheme)
         if newTheme == "Custom" then return end
         setByPreset = true
         for _,v in next, library.themes do
             if v.name == newTheme then
+                for x, d in pairs(library.options) do
+                    if v.theme[tostring(x)] ~= nil then
+                        d:SetColor(v.theme[tostring(x)])
+                    end
+                end
                 library:SetTheme(v.theme)
                 break
             end
@@ -4727,7 +4737,7 @@ function library:CreateSettingsTab(menu)
         themeSection:AddColor({text = i, flag = i, color = library.theme[i], callback = function(c3)
             library.theme[i] = c3
             library:SetTheme(library.theme)
-            if not setByPreset then 
+            if not setByPreset and not setByConfig then 
                 library.options.preset_theme:Select('Custom')
             end
         end});
@@ -4736,6 +4746,5 @@ function library:CreateSettingsTab(menu)
     return settingsTab;
 end
 
--- KEEP THESE LINES BELOW THE FUNCTION
 getgenv().library = library
 return library

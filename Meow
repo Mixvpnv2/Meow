@@ -4626,6 +4626,7 @@ function library:CreateSettingsTab(menu)
     local configSection = settingsTab:AddSection('Config', 1);
     local mainSection = settingsTab:AddSection('Main', 1);
 
+    -- Config UI elements
     configSection:AddBox({text = 'Config Name', flag = 'configinput'})
     configSection:AddList({text = 'Config', flag = 'selectedconfig'})
 
@@ -4661,6 +4662,7 @@ function library:CreateSettingsTab(menu)
 
     refreshConfigs()
 
+    -- Main settings
     mainSection:AddBind({text = 'Open / Close', flag = 'togglebind', nomouse = true, noindicator = true, bind = Enum.KeyCode.End, callback = function()
         library:SetOpen(not library.open)
     end});
@@ -4677,27 +4679,13 @@ function library:CreateSettingsTab(menu)
         setclipboard(([[game:GetService("TeleportService"):TeleportToPlaceInstance(%s, "%s")]]):format(game.PlaceId, game.JobId))
     end})
 
-    mainSection:AddButton({text = "Unload", confirm = true,
-       callback = function(bool)
-           if bool then
-               library:Unload() 
-           else
-               library:Unload() 
-           end
-       end})
-    mainSection:AddButton({text = 'info executor lvl', confirm = true, callback = function()
-        printidentity()
-        wait(0.1)
-        print("what bro?")
-    end})
+    mainSection:AddButton({text = "Unload", confirm = true, callback = function() library:Unload() end})
 
+    -- Indicators section
     mainSection:AddSeparator({text = 'Indicators'});
-
     mainSection:AddToggle({text = 'Watermark', flag = 'watermark_enabled', state = true,});
-
     mainSection:AddSlider({text = 'Custom X', flag = 'watermark_x', suffix = '%', min = 0, max = 63, increment = .1, value = 6});
     mainSection:AddSlider({text = 'Custom Y', flag = 'watermark_y', suffix = '%', min = 0, max = 95, increment = .1, value = 1});
-
     mainSection:AddToggle({text = 'Keybinds', flag = 'keybind_indicator', state = true, callback = function(bool)
         library.keyIndicator:SetEnabled(bool);
     end})
@@ -4708,24 +4696,18 @@ function library:CreateSettingsTab(menu)
         library.keyIndicator:SetPosition(newUDim2(library.flags.keybind_indicator_x / 100, 0, library.flags.keybind_indicator_y / 100, 0));    
     end});
 
-
-
+    -- Theme section
     local themeStrings = {"Custom"};
     for _,v in next, library.themes do
         table.insert(themeStrings, v.name)
     end
     local themeSection = settingsTab:AddSection('Theme', 2);
     local setByPreset = false
-themeSection:AddList({text = 'Presets', flag = 'preset_theme', values = themeStrings, callback = function(newTheme)
+    themeSection:AddList({text = 'Presets', flag = 'preset_theme', values = themeStrings, callback = function(newTheme)
         if newTheme == "Custom" then return end
         setByPreset = true
         for _,v in next, library.themes do
             if v.name == newTheme then
-                for x, d in pairs(library.options) do
-                    if v.theme[tostring(x)] ~= nil then
-                        d:SetColor(v.theme[tostring(x)])
-                    end
-                end
                 library:SetTheme(v.theme)
                 break
             end
@@ -4737,7 +4719,7 @@ themeSection:AddList({text = 'Presets', flag = 'preset_theme', values = themeStr
         themeSection:AddColor({text = i, flag = i, color = library.theme[i], callback = function(c3)
             library.theme[i] = c3
             library:SetTheme(library.theme)
-            if not setByPreset and not setByConfig then 
+            if not setByPreset then 
                 library.options.preset_theme:Select('Custom')
             end
         end});
@@ -4746,5 +4728,6 @@ themeSection:AddList({text = 'Presets', flag = 'preset_theme', values = themeStr
     return settingsTab;
 end
 
+-- KEEP THESE LINES BELOW THE FUNCTION
 getgenv().library = library
 return library
